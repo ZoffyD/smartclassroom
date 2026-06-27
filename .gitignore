@@ -1,0 +1,20 @@
+# Claude / local assistant files
+.claude/
+
+# personal notes (not for publishing)
+Presentation Demo Script.md
+
+# someone else's work
+Sensor Final Project (Shie Bin).pdf
+
+# database credentials — copy config.example.php to config.php and fill these in
+backend/api/config.php
+
+# Office temporary lock files
+~$*
+
+# report screenshots (contain a visible WiFi password + student names/matric)
+pic/
+# report documents
+*.docx
+*.pdf

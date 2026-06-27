@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Classroom</title>
+  <link rel="stylesheet" href="style.css?v=6" />
+</head>
+<body>
+
+  <!-- header -->
+  <header>
+    <div>
+      <h1>🏫 Smart Classroom</h1>
+      <p id="last-updated">Loading...</p>
+    </div>
+    <div class="header-right">
+      <!-- pick which classroom to view (one classroom per ESP32) -->
+      <select id="classroom-select" onchange="switchClassroom(this.value)"></select>
+      <div id="status-badge">Normal</div>
+      <a href="auth.php?action=account" class="btn-account">Account</a>
+      <a href="auth.php?action=logout" class="btn-logout">Logout</a>
+    </div>
+  </header>
+
+  <!-- page tabs -->
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="environment" onclick="showTab('environment')">🌡️ Environment</button>
+    <button class="tab-btn"        data-tab="attendance"  onclick="showTab('attendance')">🪪 Attendance</button>
+    <button class="tab-btn"        data-tab="settings"    onclick="showTab('settings')">⚙️ Settings</button>
+  </nav>
+
+  <!-- ============ PAGE 1: ENVIRONMENT ============ -->
+  <section id="tab-environment" class="tab-page active">
+
+    <!-- sensor readings -->
+    <div class="metrics">
+      <div class="glass metric-card temp">
+        <span class="icon">🌡️</span>
+        <div class="label">Temperature</div>
+        <div class="value"><span id="temp">--</span><span class="unit">°C</span></div>
+      </div>
+      <div class="glass metric-card hum">
+        <span class="icon">💧</span>
+        <div class="label">Humidity</div>
+        <div class="value"><span id="hum">--</span><span class="unit">%</span></div>
+      </div>
+      <div class="glass metric-card gas">
+        <span class="icon">💨</span>
+        <div class="label">Air Quality</div>
+        <div class="value word" id="gas">--</div>
+        <div class="sub" id="gas-sub"></div>
+      </div>
+      <div class="glass metric-card light">
+        <span class="icon">☀️</span>
+        <div class="label">Lighting</div>
+        <div class="value word" id="light">--</div>
+        <div class="sub" id="light-sub"></div>
+      </div>
+      <div class="glass metric-card sound">
+        <span class="icon">🔊</span>
+        <div class="label">Noise</div>
+        <div class="value word" id="sound">--</div>
+        <div class="sub" id="sound-sub"></div>
+      </div>
+      <div class="glass metric-card motion">
+        <span class="icon">🚶</span>
+        <div class="label">Motion</div>
+        <div class="value" id="motion" style="font-size:18px; padding-top:4px;">--</div>
+      </div>
+    </div>
+
+    <!-- fan status (automatic) + insight side by side -->
+    <div class="bottom-row">
+      <div class="glass relay-card">
+        <div class="section-title">Fan / AC (Automatic)</div>
+        <div class="relay-row">
+          <span class="relay-label">🔌 Fan / AC</span>
+          <span id="fan-status" class="fan-pill off">OFF</span>
+        </div>
+        <p class="hint" style="margin-top:12px;margin-bottom:0">
+          The fan turns on by itself when the room reaches the Warning level.
+          Change the limits in the Settings tab.
+        </p>
+      </div>
+
+      <div class="glass insight-card">
+        <div class="section-title">Insight (last 24h)</div>
+        <div id="insight-content">
+          <div class="loading">Loading insights...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- four sensor history graphs -->
+    <div class="full-row">
+      <div class="glass attendance-card">
+        <div class="att-header">
+          <div class="section-title" style="margin-bottom:0">Sensor History (recent readings)</div>
+          <button class="btn-refresh" onclick="loadCharts()">↻ Refresh</button>
+        </div>
+        <div class="charts-grid">
+          <div class="chart-box"><div class="chart-label">🌡️ Temperature (°C)</div><canvas id="chart-temp"  height="160"></canvas></div>
+          <div class="chart-box"><div class="chart-label">💧 Humidity (%)</div><canvas id="chart-hum"   height="160"></canvas></div>
+          <div class="chart-box"><div class="chart-label">💨 Gas / Air (ppm)</div><canvas id="chart-gas"   height="160"></canvas></div>
+          <div class="chart-box"><div class="chart-label">☀️ Light (lx)</div><canvas id="chart-light" height="160"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ============ PAGE 2: ATTENDANCE ============ -->
+  <section id="tab-attendance" class="tab-page">
+
+    <!-- registered students -->
+    <div class="full-row">
+      <div class="glass attendance-card">
+        <div class="att-header">
+          <div>
+            <div class="section-title" style="margin-bottom:4px">Students</div>
+            <div class="hint" id="present-count" style="margin-bottom:0">Present now: -- / --</div>
+          </div>
+          <button class="btn-refresh" onclick="loadStudents()">↻ Refresh</button>
+        </div>
+
+        <div class="register-form">
+          <input id="reg-uid"    placeholder="Card UID (tap reader or type)" />
+          <input id="reg-name"   placeholder="Name" />
+          <input id="reg-matric" placeholder="Matric" />
+          <button class="btn-register" onclick="registerStudent()">+ Register</button>
+        </div>
+        <div id="reg-msg" class="reg-msg"></div>
+
+        <table class="att-table" style="margin-top:14px;">
+          <thead>
+            <tr><th>Name</th><th>Matric</th><th>Status</th><th></th></tr>
+          </thead>
+          <tbody id="students-body">
+            <tr><td colspan="4" class="loading" style="padding:12px 0;">Loading students...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- attendance history (every check in / check out) -->
+    <div class="full-row">
+      <div class="glass attendance-card">
+        <div class="att-header">
+          <div class="section-title" style="margin-bottom:0">Attendance History</div>
+          <div class="att-tools">
+            <input type="date" id="att-date" class="date-input" onchange="loadAttendance()">
+            <button class="btn-refresh" onclick="document.getElementById('att-date').value=''; loadAttendance()">All days</button>
+            <button class="btn-refresh" onclick="exportAttendanceCSV()">⬇ Export Excel</button>
+            <button class="btn-refresh" onclick="loadAttendance()">↻ Refresh</button>
+          </div>
+        </div>
+        <table class="att-table">
+          <thead>
+            <tr><th>Name</th><th>Matric</th><th>Action</th><th>Time</th></tr>
+          </thead>
+          <tbody id="att-body">
+            <tr><td colspan="4" class="loading" style="padding:12px 0;">Loading history...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ============ PAGE 3: SETTINGS ============ -->
+  <section id="tab-settings" class="tab-page">
+    <div class="full-row">
+      <div class="glass attendance-card">
+        <div class="section-title">Comfort &amp; Safety Limits</div>
+        <p class="hint">Pick a preset, or fine-tune below. These decide when the room shows Warning/Critical and when the fan turns on by itself.</p>
+        <div class="preset-row">
+          <button class="btn-preset" onclick="applyPreset('comfortable')">😊 Comfortable</button>
+          <button class="btn-preset" onclick="applyPreset('standard')">⚖️ Standard</button>
+          <button class="btn-preset" onclick="applyPreset('strict')">🛡️ Strict</button>
+        </div>
+        <div class="settings-grid">
+          <label>Warm alert (°C)<input type="number" id="set-temp-warn" step="0.1"></label>
+          <label>Hot alert (°C)<input type="number" id="set-temp-danger" step="0.1"></label>
+          <label>Air quality alert<input type="number" id="set-gas-warn"></label>
+          <label>Air quality danger<input type="number" id="set-gas-danger"></label>
+          <label>Update every (seconds)<input type="number" id="set-interval"></label>
+        </div>
+        <button class="btn-register" onclick="saveSettings()">Save</button>
+        <div id="set-msg" class="reg-msg"></div>
+      </div>
+    </div>
+
+    <div class="full-row">
+      <div class="glass attendance-card">
+        <div class="section-title">This Classroom</div>
+        <div class="register-form">
+          <input id="room-name" placeholder="Classroom name (e.g. Room A101)" />
+          <button class="btn-register" onclick="renameClassroom()">Rename</button>
+          <button class="btn-delete" style="padding:9px 18px" onclick="deleteClassroom()">Delete classroom</button>
+        </div>
+        <div id="room-msg" class="reg-msg"></div>
+        <div id="device-info" class="hint" style="margin-top:10px"></div>
+      </div>
+    </div>
+  </section>
+
+  <footer>Smart Classroom Monitor</footer>
+
+  <script src="app.js?v=6"></script>
+</body>
+</html>

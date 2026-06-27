@@ -1,0 +1,9 @@
+# stop the database files being opened in a browser.
+# each api file is called directly (eg /api/getClassrooms.php) so no url rewriting is needed.
+
+<Files "config.php">
+    Require all denied
+</Files>
+<Files "dbconnect.php">
+    Require all denied
+</Files>

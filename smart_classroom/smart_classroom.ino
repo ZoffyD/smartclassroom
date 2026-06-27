@@ -11,7 +11,6 @@
 #include <SPI.h>
 #include <MFRC522.h>
 
-// --- pin wiring ---
 #define DHT_PIN 14
 #define DHT_TYPE DHT11
 #define MQ2_PIN 34
@@ -26,7 +25,6 @@
 #define RFID_RST_PIN 4
 #define BOOT_BUTTON 0
 
-// --- server ---
 const char* SERVER_HOST = "canorcannot.com";
 const char* SERVER_PATH = "/Eric/smartclassroom"; 
 
@@ -40,7 +38,7 @@ bool beginUrl(HTTPClient& http, const String& path) {
   return http.begin(serverBase() + path);
 }
 
-// alarm thresholds - the dashboard can change these
+// alarm thresholds
 float tempWarning = 30.0;
 float tempDanger = 35.0;
 int gasWarning = 800;
@@ -70,7 +68,7 @@ MFRC522 rfid(RFID_SS_PIN, RFID_RST_PIN);
 unsigned long lastUpload = 0;
 unsigned long lastSettings = 0;
 unsigned long lastRfidCheck = 0;
-unsigned long wifiLostSince = 0;                    // when wifi dropped (0 = online)
+unsigned long wifiLostSince = 0;    // when wifi dropped (0 = online)
 const unsigned long WIFI_RECONNECT_GRACE = 45000;  
 
 void setup() {
@@ -176,7 +174,7 @@ void loop() {
 void checkRFID() {
   if (!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial()) return;
 
-  // build the uid string, e.g. AA:BB:CC:DD
+  // build the uid string
   String uid = "";
   for (byte i = 0; i < rfid.uid.size; i++) {
     if (i > 0) uid += ":";
@@ -231,7 +229,7 @@ void checkRFID() {
   delay(1500);
 }
 
-// read every sensor, drive the fan/buzzer, then upload
+// read every sensor, then upload
 void readAndUpload() {
   float temperature = dht.readTemperature();
   float humidity = dht.readHumidity();
@@ -240,14 +238,13 @@ void readAndUpload() {
   int sound = analogRead(SOUND_PIN);
   bool motion = digitalRead(PIR_PIN);
 
-  if (isnan(temperature)) temperature = 0;   // DHT sometimes returns nan
+  if (isnan(temperature)) temperature = 0; 
   if (isnan(humidity)) humidity = 0;
 
   bool tooHot = (temperature > tempWarning) || (gas > gasWarning);
   bool danger = (temperature > tempDanger) || (gas > gasDanger);
 
-  // fan kicks in at the warning level; buzzer only at danger
-  digitalWrite(RELAY_PIN, tooHot ? LOW : HIGH);   // relay is active-low
+  digitalWrite(RELAY_PIN, tooHot ? LOW : HIGH);  
   digitalWrite(BUZZER_PIN, danger ? HIGH : LOW);
 
   Serial.printf("T:%.1f H:%.1f G:%d L:%d S:%d M:%d Fan:%s\n",

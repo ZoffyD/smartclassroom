@@ -175,7 +175,7 @@ async function loadLatest() {
     document.getElementById('hum').textContent    = d.humidity    ?? '--';
     document.getElementById('motion').textContent = d.motion ? '✅ Detected' : '⬜ None';
 
-    // plain-word readings (with the raw number in small print)
+    // plain-word readings 
     const [gasWord, gasRaw]     = airQuality(d.gas);
     const [lightWord, lightRaw] = lightLevel(d.light);
     const [soundWord, soundRaw] = noiseLevel(d.sound);
@@ -231,7 +231,6 @@ async function loadInsight() {
   }
 }
 
-// fetch the recent readings once, then draw a line chart for each sensor
 async function loadCharts() {
   try {
     const res  = await fetch(withRoom('/api/getHistory.php?limit=30'));
@@ -246,7 +245,6 @@ async function loadCharts() {
   }
 }
 
-// draw one simple line chart of values onto a canvas
 function drawLineChart(canvasId, raw, color, unit) {
   const values = raw.filter(v => v != null);
   const canvas = document.getElementById(canvasId);
@@ -513,7 +511,9 @@ function loadRoomInfo() {
   const el = document.getElementById('device-info');
   const r  = classroomList.find(x => String(x.id) === String(currentClassroom));
   if (!r) { el.textContent = 'No classroom selected.'; return; }
-  document.getElementById('room-name').value = r.name;   // pre-fill the rename box
+  // pre-fill the rename box, but don't overwrite it while the user is typing in it
+  const nameInput = document.getElementById('room-name');
+  if (document.activeElement !== nameInput) nameInput.value = r.name;
   if (r.device_id) {
     const seen = r.last_seen ? new Date(r.last_seen).toLocaleString() : '--';
     el.innerHTML = `📡 Sensor device: <b>Connected</b><br>Last seen: ${seen}`;

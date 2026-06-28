@@ -152,7 +152,7 @@ void loop() {
     lastRfidCheck = now;
     byte v = rfid.PCD_ReadRegister(MFRC522::VersionReg);
     if (v == 0x00 || v == 0xFF) {
-      Serial.println("RFID stopped responding -> re-initializing");
+      Serial.printf("RFID stopped responding (VersionReg=0x%02X) -> re-initializing\n", v);
       rfid.PCD_Init();
       rfid.PCD_SetAntennaGain(rfid.RxGain_max);
     }
@@ -392,7 +392,6 @@ void startAPMode() {
     ESP.restart();
   });
 
-  // phones quietly request these to check for internet; answering with the
   // config page makes the "Sign in to WiFi" sheet pop up by itself
   auto serveConfig = []() { configServer.send(200, "text/html", getConfigPage()); };
   configServer.on("/generate_204",        HTTP_GET, serveConfig);   // Android
@@ -422,8 +421,7 @@ void checkBootButtonLongPress() {
   if (state == HIGH && bootPressed) bootPressed = false;
 }
 
-// the wifi setup page: type your wifi name + password (pre-filled with the last
-// one). no network scan, so it loads instantly and the popup never times out.
+// the wifi setup page: type your wifi name + password . no network scan, so it loads instantly and the popup never times out.
 String getConfigPage() {
   String html = R"rawliteral(
 <!DOCTYPE html><html><head>

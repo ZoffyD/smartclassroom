@@ -20,7 +20,7 @@ driven automatically based on per-classroom thresholds.
 ```
 smart_classroom/        ESP32 firmware (Arduino .ino)
 backend/
-  api/                  PHP REST endpoints + shared logic (dbconnect.php, auth.php)
+  api/                  PHP REST endpoints + shared logic (dbconnect.php, auth_lib.php)
   database/schema.sql   MySQL schema (run once)
 frontend/
   index.html            dashboard

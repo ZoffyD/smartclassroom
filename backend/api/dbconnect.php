@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(204); exit; }
 // session, so its frequent uploads don't pile up session files).
 $PUBLIC_ENDPOINTS = ['uploadSensor.php', 'scan.php', 'getSettings.php'];
 if (!in_array(basename($_SERVER['SCRIPT_NAME'] ?? ''), $PUBLIC_ENDPOINTS, true)) {
-    require __DIR__ . '/auth.php';
+    require __DIR__ . '/auth_lib.php';
     requireLogin();
 }
 

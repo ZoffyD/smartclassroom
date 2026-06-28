@@ -1,7 +1,7 @@
 <?php
-// One page handles all account actions, chosen by ?action=
+
 //   login (default) | signup | account | forgot | logout
-require __DIR__ . '/api/auth.php';
+require __DIR__ . '/api/auth_lib.php';
 
 $action = $_GET['action'] ?? 'login';
 $error = '';

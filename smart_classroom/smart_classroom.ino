@@ -235,8 +235,17 @@ void readAndUpload() {
   float humidity = dht.readHumidity();
   int gas = analogRead(MQ2_PIN);
   int light = analogRead(LDR_PIN);
-  int sound = analogRead(SOUND_PIN);
   bool motion = digitalRead(PIR_PIN);
+
+
+  int sLo = 4095, sHi = 0;
+  unsigned long sStart = millis();
+  while (millis() - sStart < 50) {
+    int s = analogRead(SOUND_PIN);
+    if (s < sLo) sLo = s;
+    if (s > sHi) sHi = s;
+  }
+  int sound = sHi - sLo;
 
   if (isnan(temperature)) temperature = 0; 
   if (isnan(humidity)) humidity = 0;
@@ -250,7 +259,7 @@ void readAndUpload() {
   Serial.printf("T:%.1f H:%.1f G:%d L:%d S:%d M:%d Fan:%s\n",
                 temperature, humidity, gas, light, sound, motion, tooHot ? "ON" : "OFF");
 
-  updateOLED(temperature, humidity, gas, light, motion, tooHot);
+  updateOLED(temperature, humidity, gas, light, sound, motion, tooHot);
 
   if (WiFi.status() != WL_CONNECTED) return;
 
@@ -449,14 +458,15 @@ button{width:100%;margin-top:22px;padding:12px;background:#007bff;color:#fff;bor
 }
 
 // live readings screen
-void updateOLED(float temp, float hum, int gas, int light, bool motion, bool relay) {
+void updateOLED(float temp, float hum, int gas, int light, int sound, bool motion, bool relay) {
   display.clearDisplay();
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
   display.setCursor(0, 0);
-  display.printf("T:%.1fC  H:%.0f%%\n", temp, hum);
+  display.printf("T:%.1fC H:%.0f%%\n", temp, hum);
   display.printf("Gas:   %d\n", gas);
   display.printf("Light: %d\n", light);
+  display.printf("Sound: %d\n", sound);
   display.printf("Motion:%s\n", motion ? "YES" : "no");
   display.printf("Fan:   %s\n", relay ? "ON" : "off");
   display.printf("Tap card to attend");

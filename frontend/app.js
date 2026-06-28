@@ -9,9 +9,6 @@
   };
 })();
 
-// base path where the app is hosted. the api lives under this folder.
-// deployed at https://canorcannot.com/Eric/smartclassroom/ , so the api is at
-// /Eric/smartclassroom/api/... (leave '' only if hosted at the domain root).
 const API = '/Eric/smartclassroom';
 
 // which classroom we are currently looking at, and which tab is open
@@ -20,7 +17,7 @@ let currentTab = 'environment';
 const classroomList = [];
 let attendanceRows = [];   // latest attendance rows, kept for the Excel export
 
-// add ?classroom=... to an API path so every call is scoped to the chosen room
+// add classroom to an API path so every call is scoped to the chosen room
 function withRoom(path) {
   if (!currentClassroom) return `${API}${path}`;
   const sep = path.includes('?') ? '&' : '?';
@@ -92,7 +89,7 @@ async function renameClassroom() {
   }
 }
 
-// delete the current classroom (and all its students / readings / attendance)
+// delete the current classroom
 async function deleteClassroom() {
   const room = classroomList.find(r => String(r.id) === String(currentClassroom));
   if (!room) return;
@@ -114,7 +111,6 @@ async function deleteClassroom() {
 }
 
 // ----- tab switching -----
-
 function showTab(name) {
   currentTab = name;
   document.querySelectorAll('.tab-btn').forEach(b =>
@@ -158,9 +154,11 @@ function lightLevel(l) {
   return ['Dark', `reading ${l}`];
 }
 function noiseLevel(s) {
+  // sound is now peak-to-peak (smaller numbers). Tune these two thresholds by
+  // watching the OLED "Sound" value: note it when quiet vs when loud.
   if (s == null) return ['--', ''];
-  if (s >= 2500) return ['Loud', `reading ${s}`];
-  if (s >= 1000) return ['Moderate', `reading ${s}`];
+  if (s >= 50) return ['Loud', `reading ${s}`];
+  if (s >= 45) return ['Moderate', `reading ${s}`];
   return ['Quiet', `reading ${s}`];
 }
 
